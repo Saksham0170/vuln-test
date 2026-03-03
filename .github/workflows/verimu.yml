@@ -1,0 +1,44 @@
+# ────────────────────────────────────────────────────────────────
+# CI Security Scan
+# Runs Verimu dependency scan and fails CI on HIGH vulnerabilities
+#
+# Required GitHub Secrets:
+#   VERIMU_API_KEY — API key for Verimu scanning
+# ────────────────────────────────────────────────────────────────
+
+name: Verimu Scan
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: verimu-frontend-scan
+  cancel-in-progress: true
+
+jobs:
+  scan:
+    name: Verimu Security Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Verimu CLI
+        run: npm install -g verimu@latest
+
+      - name: Run Verimu scan
+        env:
+          VERIMU_API_KEY: ${{ secrets.VERIMU_API_KEY }}
+        run: |
+          # Scan dependencies and fail CI if HIGH severity vulnerabilities found
+          verimu scan --fail-on HIGH  x
